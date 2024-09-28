@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config();
 const multer = require('multer');
-const cors = require('cors'); 
 const Recipe = require('./models/Recipe'); // Assuming you have a Recipe model
 const userRoutes = require('./routes/user'); // Import user routes
 const recipesRoutes = require('./routes/recipes');  // Import recipes routes
@@ -18,9 +20,10 @@ app.use(express.json());
 
 // Enable CORS for specific origin
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests only from this origin
+  origin: process.env.CLIENT_URL,  // Allow requests only from this origin
   credentials: true,               // Allow credentials if needed
 }));
+app.use(cors());
 
 // Logging middleware to track incoming requests
 app.use((req, res, next) => {
