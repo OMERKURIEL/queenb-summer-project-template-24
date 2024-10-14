@@ -2,12 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
 const multer = require('multer');
+const fs = require('fs'); // To check if 'uploads' directory exists
 const Recipe = require('./models/Recipe'); // Assuming you have a Recipe model
 const userRoutes = require('./routes/user'); // Import user routes
-const recipesRoutes = require('./routes/recipes');  // Import recipes routes
+const recipesRoutes = require('./routes/recipes'); // Import recipes routes
+const imageRoutes = require('./routes/imageRoutes'); // Import the image routes
 
 // Constants
 const PORT = process.env.PORT || 8082; // Fallback to port 8082 if not set
@@ -20,16 +20,26 @@ app.use(express.json());
 
 // Enable CORS for specific origin
 app.use(cors({
-  origin: process.env.CLIENT_URL,  // Allow requests only from this origin
-  credentials: true,               // Allow credentials if needed
+  origin: process.env.CLIENT_URL, // Allow requests only from this origin
+  credentials: true,              // Allow credentials if needed
 }));
-app.use(cors());
+
+// Serve static files from the 'uploads' folder
+app.use('/uploads', express.static('server/uploads')); // Allows images to be accessed at /uploads
+
+// Use image routes
+app.use('/memos/image', imageRoutes);
 
 // Logging middleware to track incoming requests
 app.use((req, res, next) => {
   console.log(req.path, req.method); // Log the request method and path
   next();
 });
+
+// Ensure 'uploads' directory exists
+if (!fs.existsSync('server/uploads')) {
+  fs.mkdirSync('server/uploads', { recursive: true });
+}
 
 // MongoDB connection without deprecated options
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // Added options to avoid deprecation warnings
@@ -39,10 +49,11 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 // Set up multer for file handling (uploads)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Make sure this folder exists
+    cb(null, 'server/uploads'); // Save files in 'server/uploads' to match the static path
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Create a unique filename
+    const sanitizedFilename = Date.now() + '-' + file.originalname.replace(/\s+/g, '_'); // Replace spaces with underscores
+    cb(null, sanitizedFilename); // Save sanitized filename
   }
 });
 
@@ -84,7 +95,7 @@ app.post('/upload-recipe', upload.single('imageFile'), async (req, res) => {
 app.use('/api/user', userRoutes);
 
 // Recipes routes
-app.use('/api/recipes', recipesRoutes);
+app.use('/api/recipes', recipesRoutes); // Recipes routes will be under /api/recipes
 
 // Start the server
 app.listen(PORT, () => {

@@ -1,23 +1,19 @@
-import React, { useState } from 'react'; // React for JSX and component creation
-import styles from './Home.module.css'; // CSS Module for styling
+import React from 'react';
+import styles from './Home.module.css';
 import { Link } from 'react-router-dom';
-import { useAuthContext } from '../../hooks/useAuthContext'; // Hook for authentication context
-import Recipelist from '../../components/Recipelist'; // List of recipes component
-import useFetch from '../../useFetch'; // Custom hook for fetching data
+import { useAuthContext } from '../../hooks/useAuthContext';
+import Recipelist from '../../components/Recipelist';
+import useFetch from '../../useFetch';
 
-// URL to fetch recipes from the API
 const url = process.env.REACT_APP_API_URL + '/recipes';
 
 const HomePage = () => {
-  const { user } = useAuthContext(); // Getting the user context
+  const { user } = useAuthContext();
 
-  // Fetching recipes data from the API
   const { error, isLoading, data: recipes } = useFetch(url);
 
   return (
     <div className={styles.home}>
-    <h1 className={styles.headline}> The Royal CookBook</h1>
-
       {/* Display error if any */}
       {error && <div>{error}</div>}
       {/* Display loading message while data is being fetched */}
